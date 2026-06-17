@@ -564,8 +564,7 @@
 
     // ============================================================
     // LOGIN (Via API fetch POST)
-    // ============================================================
-   function executarLogin() {
+function executarLogin() {
       const u = document.getElementById('usuario-input').value.trim();
       const s = document.getElementById('senha-input').value.trim();
       const errBox = document.getElementById('login-erro');
@@ -582,37 +581,40 @@
       btn.disabled = true;
       btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Validando...';
 
-      // Faz a requisição direta via parâmetros URL (GET) que o Apps Script responde nativamente sem travar o CORS
-      fetch(`${URL_API}?acao=login&usuario=${encodeURIComponent(u)}&senha=${encodeURIComponent(s)}`)
-        .then(res => res.json())
-        .then(res => {
-          btn.disabled = false;
-          btn.innerHTML = 'Entrar <i class="fa-solid fa-right-to-bracket"></i>';
+      // O segredo está no redirect: "follow" para seguir o link do Google sem travar
+      fetch(`${URL_API}?acao=login&usuario=${encodeURIComponent(u)}&senha=${encodeURIComponent(s)}`, {
+        method: "GET",
+        redirect: "follow"
+      })
+      .then(res => res.json())
+      .then(res => {
+        btn.disabled = false;
+        btn.innerHTML = 'Entrar <i class="fa-solid fa-right-to-bracket"></i>';
 
-          if (res && res.sucesso) {
-            usuarioLogado = res.usuario;
-            document.getElementById('user-display-name').innerText = res.usuario.nomeCompleto;
-            document.getElementById('user-display-contact').innerText = "@" + res.usuario.username;
-            document.getElementById('tela-login').classList.add('hidden');
-            document.getElementById('app-principal').classList.remove('hidden');
-            
-            // Carrega os dados iniciais do app
-            carregarMural();
-            carregarReservas();
-            carregarPrazos();
-            showToast("Bem-vindo ao BookVert, " + res.usuario.nomeCompleto + "!");
-          } else {
-            errMsg.innerText = res.mensagem || "Usuário ou senha incorretos.";
-            errBox.classList.remove('hidden');
-          }
-        })
-        .catch(err => {
-          btn.disabled = false;
-          btn.innerHTML = 'Entrar <i class="fa-solid fa-right-to-bracket"></i>';
-          errMsg.innerText = "Falha de conexão com o servidor. Verifique a URL do Web App.";
+        // O seu Código.gs retorna { sucesso: true, usuario: {...} } se der certo
+        if (res && res.sucesso) {
+          usuarioLogado = res.usuario;
+          document.getElementById('user-display-name').innerText = res.usuario.nomeCompleto;
+          document.getElementById('user-display-contact').innerText = "@" + res.usuario.username;
+          document.getElementById('tela-login').classList.add('hidden');
+          document.getElementById('app-principal').classList.remove('hidden');
+          
+          carregarMural();
+          carregarReservas();
+          carregarPrazos();
+          showToast("Bem-vindo ao BookVert, " + res.usuario.nomeCompleto + "!");
+        } else {
+          errMsg.innerText = res.mensagem || "Usuário ou senha incorretos.";
           errBox.classList.remove('hidden');
-          console.error(err);
-        });
+        }
+      })
+      .catch(err => {
+        btn.disabled = false;
+        btn.innerHTML = 'Entrar <i class="fa-solid fa-right-to-bracket"></i>';
+        errMsg.innerText = "Erro ao conectar. Verifique se o Web App foi implantado como 'Qualquer pessoa'.";
+        errBox.classList.remove('hidden');
+        console.error(err);
+      });
     }
 
       function resetarBotao() {
@@ -723,11 +725,14 @@
     // ============================================================
     // MURAL (Carrega via GET apontando a ação)
     // ============================================================
-    function carregarMural() {
+   function carregarMural() {
       const c = document.getElementById('mural-container');
       c.innerHTML = '<div class="empty-state">Sincronizando mural...</div>';
 
-      fetch(`${URL_API}?acao=listarSolicitacoesAbertas`)
+      fetch(`${URL_API}?acao=listarSolicitacoesAbertas`, {
+        method: "GET",
+        redirect: "follow"
+      })
         .then(res => res.json())
         .then(lista => {
           if (!lista || lista.length === 0) {
