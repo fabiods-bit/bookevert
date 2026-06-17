@@ -110,6 +110,7 @@
 
     .divider { height: 1.5px; background: var(--border); opacity: .6; border: none; margin: 0; }
 
+    /* ESTILOS ORIGINAIS DO SEU LOGIN BOX ESCURO */
     #tela-login {
       display: flex;
       align-items: center;
@@ -140,13 +141,24 @@
     }
 
     .login-box {
-      background: #ffffff;
-      border: 1.5px solid var(--border);
+      background: var(--ink);
+      border: 1.5px solid rgba(255, 255, 255, 0.15);
       border-radius: 20px;
       padding: 44px 40px;
       width: 100%; max-width: 420px;
       position: relative; z-index: 1;
-      box-shadow: 0 10px 40px rgba(0,0,0,.05);
+      box-shadow: 0 10px 40px rgba(0,0,0,.3);
+    }
+    .login-box .label {
+      color: rgba(255,255,255,0.6);
+    }
+    .login-box .input {
+      background: rgba(255,255,255,0.05);
+      border-color: rgba(255,255,255,0.15);
+      color: #ffffff;
+    }
+    .login-box .input:focus {
+      border-color: #7eba97;
     }
 
     .login-logo {
@@ -155,7 +167,7 @@
     }
     .login-logo .tagline {
       font-size: 13px;
-      color: var(--muted);
+      color: #7a7468;
       margin-top: 7px;
     }
 
@@ -397,8 +409,8 @@
   <div id="tela-login">
     <div class="login-box">
       <div class="login-logo">
-        <h1 class="display" style="font-size: 32px; color: var(--sage);">BookVert</h1>
-        <div class="tagline">Um bom Vertiano sempre compartilha sabedoria</div>
+        <img src="https://lh3.googleusercontent.com/d/1X_Zp8eO-I8A3W5w_0g-f_vV-4y6R5FhV" alt="Logo BookVert" style="max-width: 180px; height: auto; margin-bottom: 14px;">
+        <div class="tagline" style="color: rgba(255,255,255,0.4);">Um bom Vertiano sempre compartilha sabedoria</div>
       </div>
 
       <div id="login-erro" class="login-erro-box hidden">
@@ -425,8 +437,8 @@
   <div id="app-principal" class="hidden">
     <header>
       <div class="header-inner">
-        <div class="header-logo">
-          <span style="font-weight:700; color:#fff;">Book</span><span>Vert</span>
+        <div class="header-logo" style="display: flex; align-items: center;">
+          <img src="https://lh3.googleusercontent.com/d/1X_Zp8eO-I8A3W5w_0g-f_vV-4y6R5FhV" alt="Logo" style="height: 75px; width: auto;">
         </div>
        
         <div class="header-actions">
@@ -509,9 +521,6 @@
       }
     });
 
-    // ============================================================
-    // UTILITÁRIOS
-    // ============================================================
     function showToast(msg) {
       const t = document.getElementById('toast');
       if (t) {
@@ -526,6 +535,22 @@
       document.getElementById('confirm-msg').innerText = msg;
       acaoPendente = callback;
       document.getElementById('confirm-overlay').classList.remove('hidden');
+    }
+
+    // Função global que serve de motor para todas as requisições (Bypass CORS)
+    function requisitarAPI(urlParametros, funcaoCallback) {
+      const nomeCallbackGlobal = 'bkvert_cb_' + Math.round(Math.random() * 1000000);
+      
+      window[nomeCallbackGlobal] = function(dados) {
+        funcaoCallback(dados);
+        document.body.removeChild(scriptTag);
+        delete window[nomeCallbackGlobal];
+      };
+
+      const scriptTag = document.createElement('script');
+      const caractereUniao = urlParametros.includes('?') ? '&' : '?';
+      scriptTag.src = urlParametros + caractereUniao + 'callback=' + nomeCallbackGlobal;
+      document.body.appendChild(scriptTag);
     }
 
     function fecharConfirm() {
@@ -547,27 +572,6 @@
       showToast("Sessão encerrada com sucesso.");
     }
 
-    // ============================================================
-    // CHAMADOR GLOBAL DE JSONP PARA TODAS AS FUNÇÕES (Bypass CORS)
-    // ============================================================
-    function requisitarAPI(urlParametros, funcaoCallback) {
-      const nomeCallbackGlobal = 'bkvert_cb_' + Math.round(Math.random() * 1000000);
-      
-      window[nomeCallbackGlobal] = function(dados) {
-        funcaoCallback(dados);
-        document.body.removeChild(scriptTag);
-        delete window[nomeCallbackGlobal];
-      };
-
-      const scriptTag = document.createElement('script');
-      const caractereUniao = urlParametros.includes('?') ? '&' : '?';
-      scriptTag.src = urlParametros + caractereUniao + 'callback=' + nomeCallbackGlobal;
-      document.body.appendChild(scriptTag);
-    }
-
-    // ============================================================
-    // LOGIN TRATADO
-    // ============================================================
     function executarLogin() {
       const u = document.getElementById('usuario-input').value.trim();
       const s = document.getElementById('senha-input').value.trim();
@@ -619,9 +623,6 @@
       });
     }
 
-    // ============================================================
-    // PEDIDO DE LIVRO 
-    // ============================================================
     function validarFormPedido() {
       const t = document.getElementById('req-titulo').value.trim();
       const a = document.getElementById('req-autor').value.trim();
@@ -663,9 +664,6 @@
       });
     }
 
-    // ============================================================
-    // MURAL
-    // ============================================================
     function carregarMural() {
       const c = document.getElementById('mural-container');
       if (!c) return;
@@ -712,9 +710,6 @@
       );
     }
 
-    // ============================================================
-    // RESERVAS
-    // ============================================================
     function carregarReservas() {
       const c = document.getElementById('reservas-container');
       if (!c) return;
@@ -764,9 +759,6 @@
       );
     }
 
-    // ============================================================
-    // PRAZOS
-    // ============================================================
     function carregarPrazos() {
       const c = document.getElementById('prazos-container');
       if (!c) return;
