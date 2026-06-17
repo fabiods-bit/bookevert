@@ -828,13 +828,16 @@
     // ============================================================
     // PRAZOS
     // ============================================================
+// ============================================================
+    // PRAZOS (Corrigido para o GitHub)
+    // ============================================================
     function carregarPrazos() {
       const c = document.getElementById('prazos-container');
       c.innerHTML = '<div class="empty-state">Carregando prazos...</div>';
 
       fetch(`${URL_API}?acao=obterPainelUsuario&idUsuario=${encodeURIComponent(usuarioLogado.id)}`)
         .then(res => res.json())
-        .then(paineis) {
+        .then(paineis => {
           let itens = [];
           if (paineis.emprestados) paineis.emprestados.forEach(function(x) { x.tipo = 'emprestei'; itens.push(x); });
           if (paineis.pegos) paineis.pegos.forEach(function(x) { x.tipo = 'peguei'; itens.push(x); });
@@ -861,7 +864,7 @@
         .catch(() => {
           c.innerHTML = '<div class="empty-state">Erro ao processar painel de prazos.</div>';
         });
-    }
+    }    
   </script>
 </body>
 </html>
