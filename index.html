@@ -522,7 +522,7 @@
 
   </div>
 
-  <script>
+<script>
     // URL PÚBLICA DA SUA API GERADA NO APPS SCRIPT
     const URL_API = "https://script.google.com/macros/s/AKfycbzJaUVD7wsW7ml4v6WuhV2Tz9z8yZSYLrvQNQrYmtOlwrnfQpq87I621XINr9tuEwKSjg/exec";
 
@@ -530,9 +530,12 @@
     let acaoPendente = null;
 
     document.addEventListener('DOMContentLoaded', function() {
-      document.getElementById('senha-input').addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') executarLogin();
-      });
+      const senhaInput = document.getElementById('senha-input');
+      if (senhaInput) {
+        senhaInput.addEventListener('keypress', function(e) {
+          if (e.key === 'Enter') executarLogin();
+        });
+      }
     });
 
     // ============================================================
@@ -540,9 +543,11 @@
     // ============================================================
     function showToast(msg) {
       const t = document.getElementById('toast');
-      t.innerText = msg;
-      t.classList.add('show');
-      setTimeout(() => t.classList.remove('show'), 3500);
+      if (t) {
+        t.innerText = msg;
+        t.classList.add('show');
+        setTimeout(() => t.classList.remove('show'), 3500);
+      }
     }
 
     function abrirConfirm(title, msg, callback) {
@@ -562,145 +567,6 @@
       fecharConfirm();
     }
 
-    // ============================================================
-// ============================================================
-    // LOGIN SOLUCIONADO - COMPATÍVEL COM O SEU CÓDIGO.GS
-    // ============================================================
-   // ============================================================
-    // LOGIN 100% OPERACIONAL SEM BLOQUEIO DE CORS
-    // ============================================================
-    function executarLogin() {
-      const u = document.getElementById('usuario-input').value.trim();
-      const s = document.getElementById('senha-input').value.trim();
-      const errBox = document.getElementById('login-erro');
-      const errMsg = document.getElementById('login-erro-msg');
-      const btn = document.getElementById('btn-login');
-
-      if (!u || !s) {
-        errMsg.innerText = "Preencha todos os campos.";
-        errBox.classList.remove('hidden');
-        return;
-      }
-
-      errBox.classList.add('hidden');
-      btn.disabled = true;
-      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Validando...';
-
-      const urlCompleta = `${URL_API}?acao=login&usuario=${encodeURIComponent(u)}&senha=${encodeURIComponent(s)}`;
-
-      // Como o Google faz redirect 302, precisamos usar o modo "no-cors"
-      // para enviar os dados sem que o navegador barre o clique
-      fetch(urlCompleta, {
-        method: "GET",
-        mode: "no-cors"
-      })
-      .then(() => {
-        // No modo "no-cors", o navegador não nos deixa ler o JSON diretamente na primeira tentativa.
-        // Para puxar os dados reais validados com segurança, fazemos o parse via uma requisição secundária rápida:
-        return fetch(urlCompleta);
-      })
-      .then(res => res.json())
-      .then(res => {
-        btn.disabled = false;
-        btn.innerHTML = 'Entrar <i class="fa-solid fa-right-to-bracket"></i>';
-
-        if (res && res.sucesso === true) {
-          usuarioLogado = res.usuario;
-          
-          document.getElementById('user-display-name').innerText = res.usuario.nomeCompleto;
-          document.getElementById('user-display-contact').innerText = "@" + res.usuario.username;
-          
-          document.getElementById('tela-login').classList.add('hidden');
-          document.getElementById('app-principal').classList.remove('hidden');
-          
-          // Carrega as tabelas
-          carregarMural();
-          carregarReservas();
-          carregarPrazos();
-          
-          showToast("Bem-vindo ao BookVert, " + res.usuario.nomeCompleto + "!");
-        } else {
-          errMsg.innerText = res.mensagem || "Usuário ou senha incorretos.";
-          errBox.classList.remove('hidden');
-        }
-      })
-      .catch(err => {
-        btn.disabled = false;
-        btn.innerHTML = 'Entrar <i class="fa-solid fa-right-to-bracket"></i>';
-        
-        // Se cair aqui, a sua conta conectou com sucesso, mas o retorno precisa ser lido como texto por causa do Google
-        fetch(urlCompleta, { method: "GET" })
-        .then(r => r.text())
-        .then(texto => {
-          const dadoslimpos = JSON.parse(texto);
-          if (dadoslimpos && dadoslimpos.sucesso) {
-            usuarioLogado = dadoslimpos.usuario;
-            document.getElementById('user-display-name').innerText = dadoslimpos.usuario.nomeCompleto;
-            document.getElementById('user-display-contact').innerText = "@" + dadoslimpos.usuario.username;
-            document.getElementById('tela-login').classList.add('hidden');
-            document.getElementById('app-principal').classList.remove('hidden');
-            carregarMural();
-            carregarReservas();
-            carregarPrazos();
-          } else {
-            errMsg.innerText = dadoslimpos.mensagem || "Usuário ou senha inválidos.";
-            errBox.classList.remove('hidden');
-          }
-        })
-        .catch(() => {
-          errMsg.innerText = "Erro de comunicação. Verifique se publicou como 'Qualquer pessoa'.";
-          errBox.classList.remove('hidden');
-        });
-      });
-    }
-      function resetarBotao() {
-        btn.disabled = false;
-        btn.innerHTML = 'Entrar <i class="fa-solid fa-right-to-bracket"></i>';
-      }
-
-      fetch(URL_API, {
-        method: "POST",
-        mode: "no-cors", // Necessário para evitar bloqueio de segurança em chamadas diretas ao Apps Script macros
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ acao: "login", usuario: u, senha: s })
-      })
-      .then(() => {
-        // Devido ao comportamento do Google Script Web App com "no-cors", as respostas bem-sucedidas chegam como tipo "opaque" (vazias).
-        // Para que o sistema funcione perfeitamente de fora mantendo a segurança, fazemos uma requisição de fallback de validação via GET ou simulada.
-        // Otimização ideal: executando chamada via parâmetro GET estruturado para validar dados com segurança.
-        fetch(`${URL_API}?acao=login&usuario=${encodeURIComponent(u)}&senha=${encodeURIComponent(s)}`)
-        .then(res => res.json())
-        .then(res => {
-          resetarBotao();
-          if (res && res.sucesso) {
-            usuarioLogado = res.usuario;
-            document.getElementById('user-display-name').innerText = res.usuario.nomeCompleto;
-            document.getElementById('user-display-contact').innerText = "@" + res.usuario.username;
-            document.getElementById('tela-login').classList.add('hidden');
-            document.getElementById('app-principal').classList.remove('hidden');
-            carregarMural();
-            carregarReservas();
-            carregarPrazos();
-            showToast("Bem-vindo ao BookVert, " + res.usuario.nomeCompleto + "!");
-          } else {
-            errMsg.innerText = res.mensagem || "Usuário ou senha incorretos.";
-            errBox.classList.remove('hidden');
-          }
-        })
-        .catch(err => {
-          resetarBotao();
-          errMsg.innerText = "Falha de conexão com o servidor. Tente novamente.";
-          errBox.classList.remove('hidden');
-          console.error(err);
-        });
-      })
-      .catch(err => {
-        resetarBotao();
-        errMsg.innerText = "Erro ao conectar-se à API.";
-        errBox.classList.remove('hidden');
-      });
-    }
-
     function fazerLogout() {
       usuarioLogado = null;
       document.getElementById('usuario-input').value = '';
@@ -711,7 +577,72 @@
     }
 
     // ============================================================
-    // PEDIDO DE LIVRO — Envia formulário via GET à API do Apps Script
+    // LOGIN DINÂMICO VIA JSONP (RESOLVE O CORS DE VEZ)
+    // ============================================================
+    function executarLogin() {
+      const u = document.getElementById('usuario-input').value.trim();
+      const s = document.getElementById('senha-input').value.trim();
+      const errBox = document.getElementById('login-erro');
+      const errMsg = document.getElementById('login-erro-msg');
+      const btn = document.getElementById('btn-login');
+
+      if (!u || !s) {
+        if (errMsg && errBox) {
+          errMsg.innerText = "Preencha todos os campos.";
+          errBox.classList.remove('hidden');
+        }
+        return;
+      }
+
+      if (errBox) errBox.classList.add('hidden');
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Validando...';
+      }
+
+      // Criamos uma função de retorno temporária com nome único
+      const callbackName = 'bookvert_login_' + Math.round(Math.random() * 100000);
+      
+      window[callbackName] = function(res) {
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = 'Entrar <i class="fa-solid fa-right-to-bracket"></i>';
+        }
+
+        if (res && res.sucesso === true) {
+          usuarioLogado = res.usuario;
+          document.getElementById('user-display-name').innerText = res.usuario.nomeCompleto;
+          document.getElementById('user-display-contact').innerText = "@" + res.usuario.username;
+          
+          document.getElementById('tela-login').classList.add('hidden');
+          document.getElementById('app-principal').classList.remove('hidden');
+          
+          // Carrega as listagens integradas
+          carregarMural();
+          carregarReservas();
+          carregarPrazos();
+          
+          showToast("Bem-vindo ao BookVert, " + res.usuario.nomeCompleto + "!");
+        } else {
+          if (errMsg && errBox) {
+            errMsg.innerText = res.mensagem || "Usuário ou senha incorretos.";
+            errBox.classList.remove('hidden');
+          }
+        }
+        
+        // Limpa o elemento do script criado para não poluir a página
+        document.body.removeChild(script);
+        delete window[callbackName];
+      };
+
+      // Injeta o script chamando a API do Google sem restrição de CORS
+      const script = document.createElement('script');
+      script.src = `${URL_API}?acao=login&usuario=${encodeURIComponent(u)}&senha=${encodeURIComponent(s)}&callback=${callbackName}`;
+      document.body.appendChild(script);
+    }
+
+    // ============================================================
+    // PEDIDO DE LIVRO 
     // ============================================================
     function validarFormPedido() {
       const t = document.getElementById('req-titulo').value.trim();
@@ -759,16 +690,14 @@
     }
 
     // ============================================================
-    // MURAL (Carrega via GET apontando a ação)
+    // MURAL
     // ============================================================
-   function carregarMural() {
+    function carregarMural() {
       const c = document.getElementById('mural-container');
+      if (!c) return;
       c.innerHTML = '<div class="empty-state">Sincronizando mural...</div>';
 
-      fetch(`${URL_API}?acao=listarSolicitacoesAbertas`, {
-        method: "GET",
-        redirect: "follow"
-      })
+      fetch(`${URL_API}?acao=listarSolicitacoesAbertas`)
         .then(res => res.json())
         .then(lista => {
           if (!lista || lista.length === 0) {
@@ -816,6 +745,7 @@
     // ============================================================
     function carregarReservas() {
       const c = document.getElementById('reservas-container');
+      if (!c) return;
       c.innerHTML = '<div class="empty-state">Atualizando negociações...</div>';
 
       fetch(`${URL_API}?acao=listarLivrosReservados&idUsuario=${encodeURIComponent(usuarioLogado.id)}`)
@@ -867,13 +797,11 @@
     }
 
     // ============================================================
-    // PRAZOS
-    // ============================================================
-// ============================================================
-    // PRAZOS (Corrigido para o GitHub)
+    // PRAZOS 
     // ============================================================
     function carregarPrazos() {
       const c = document.getElementById('prazos-container');
+      if (!c) return;
       c.innerHTML = '<div class="empty-state">Carregando prazos...</div>';
 
       fetch(`${URL_API}?acao=obterPainelUsuario&idUsuario=${encodeURIComponent(usuarioLogado.id)}`)
@@ -905,7 +833,7 @@
         .catch(() => {
           c.innerHTML = '<div class="empty-state">Erro ao processar painel de prazos.</div>';
         });
-    }    
+    }   
   </script>
 </body>
 </html>
